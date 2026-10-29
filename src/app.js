@@ -71,8 +71,9 @@ function pageHeader(title, { back = true, actions = "" } = {}) {
 function bottomTabs() {
   return `<nav class="bottom-tabs" aria-label="主导航">
     ${[
-      ["grid", "工作台", "workbench", true], ["message", "消息", "", false],
-      ["users", "通讯录", "", false], ["user", "我的", "", false]
+      ["home", "工作台", "workbench", true], ["workflow", "流程中心", "", false],
+      ["appBox", "应用中心", "", false], ["message", "消息", "", false],
+      ["user", "我的", "", false]
     ].map(([name, label, route, active]) => `<button class="bottom-tab ${active ? "active" : ""}" ${route ? `data-route="${route}"` : `data-action="placeholder"`}>
       ${icon(name, 22)}<span>${label}</span>
     </button>`).join("")}
@@ -98,30 +99,41 @@ function renderWorkbenchSlice(active = "mail") {
     ? [["mail", "我的邮件"], ["notice", "公司公告"], ["news", "公司新闻"], ["honor", "公司荣誉"], ["culture", "公司风采"]]
     : [["notice", "公司公告"], ["news", "公司新闻"], ["honor", "公司荣誉"], ["culture", "公司风采"]];
   const companyContent = {
-    notice: ["关于开展第四季度安全检查的通知", "年度信息安全培训安排"],
-    news: ["公司重点项目阶段成果顺利通过验收", "智慧监理平台完成新版本发布"],
-    honor: ["公司荣获年度数字化创新单位", "花湖项目获评优秀监理项目"],
-    culture: ["项目一线摄影作品展", "员工健步走活动圆满结束"]
+    notice: [["关于2026年10月支部主题党日的通知", "2026-10-22"], ["监理公司2026年9月月度生产例会会议纪要", "2026-10-13"], ["关于贯彻落实《国铁安委函〔2026〕7号》文件精神切实做好四季度铁路监理安全管控工作的通知", "2026-10-13"]],
+    news: [["公司重点项目阶段成果顺利通过验收", "2026-10-22"], ["智慧监理平台完成新版本发布", "2026-10-13"], ["多项目协同管理工作取得阶段成果", "2026-10-08"]],
+    honor: [["公司荣获年度数字化创新单位", "2026-10-20"], ["花湖项目获评优秀监理项目", "2026-10-12"], ["优秀项目团队表彰名单发布", "2026-10-08"]],
+    culture: [["项目一线摄影作品展", "2026-10-18"], ["员工健步走活动圆满结束", "2026-10-11"], ["公司读书分享会活动回顾", "2026-10-07"]]
   };
   const content = active === "mail" && state.permissions.canViewMail
-    ? `${renderRecentList(state.recent)}<button class="view-more" data-route="mail">查看更多（${state.stats.inbox ?? 0}）${icon("chevronRight", 18)}</button>`
-    : `<div class="recent-list">${(companyContent[active] || companyContent.notice).map((title, index) => `<article class="mail-row"><span></span><div class="mail-row-main"><strong>${title}</strong><div class="mail-summary">${index ? "12-05" : "今天"}</div></div>${icon("chevronRight", 16)}</article>`).join("")}</div>`;
-  return `<section class="card slice-card">
+    ? `${renderRecentList(state.recent)}<button class="view-more" data-route="mail">查看更多（${state.stats.inbox ?? 0}）${icon("chevronRight", 20)}</button>`
+    : `<div class="company-list">${(companyContent[active] || companyContent.notice).map(([title, date]) => `<article class="company-row"><div><strong>${title}</strong><time>[ ${date.replaceAll("-", ", ")} ]</time></div>${icon("chevronRight", 17)}</article>`).join("")}</div><button class="view-more" data-action="placeholder">查看全部（141）${icon("chevronRight", 20)}</button>`;
+  return `<section class="slice-card">
     <div class="slice-tabs">${tabs.map(([key, label]) => `<button class="slice-tab ${key === active ? "active" : ""}" data-slice="${key}">${label}</button>`).join("")}</div>
     <div id="slice-content">${content}</div>
   </section>`;
 }
 
 function renderWorkbench() {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, "0");
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const currentTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
   app.innerHTML = `<div class="page with-tabs workbench">
-    <section class="workbench-hero">
-      <div class="workbench-top"><h1>工作台</h1><div class="hero-actions"><button class="icon-btn" data-action="placeholder" aria-label="搜索">${icon("search", 23)}</button><button class="icon-btn" data-action="placeholder" aria-label="更多">${icon("more", 23)}</button></div></div>
-      <div class="brand-banner"><strong>高效协同<br>创造更大的价值</strong></div>
+    <section class="workbench-masthead">
+      <div class="status-bar" aria-hidden="true"><time>${currentTime}</time><div class="status-icons"><span class="signal-bars"><i></i><i></i><i></i><i></i></span><span class="wifi-mark"></span><span class="battery-mark">96</span></div></div>
+      <div class="workbench-titlebar"><h1>智慧监理</h1></div>
+      <div class="workbench-scene">
+        <div class="welcome-block"><strong>欢迎您!,${escapeHtml(currentUser.name)}</strong><span>${icon("calendar", 22)}${today}</span></div>
+        <div class="scene-actions"><button data-action="placeholder">${icon("calendar", 21)}<span>考勤</span></button><button data-action="placeholder" aria-label="扫一扫">${icon("scan", 24)}</button></div>
+      </div>
     </section>
-    <div class="workbench-content">
-      <section class="card project-card"><div class="card-heading"><h2>我的项目</h2><button class="link-button" data-action="placeholder">全部项目${icon("chevronRight", 18)}</button></div><div class="project-name">鄂州花湖监理项目</div></section>
+    <section class="workbench-stats" aria-label="工作统计">
+      ${[["待办",0],["发起",0],["处理",3],["抄送",128]].map(([label, value]) => `<div><span>${label}</span><strong>${value}</strong></div>`).join("")}
+    </section>
+    <main class="workbench-content">
+      <section class="project-section"><h2>我的项目</h2><button class="project-name" data-action="placeholder">鄂州花湖监理项目</button><button class="project-all" data-action="placeholder">全部项目${icon("chevronRight", 20)}</button></section>
       ${renderWorkbenchSlice(state.permissions.canViewMail ? "mail" : "notice")}
-    </div>
+    </main>
     ${bottomTabs()}
   </div>`;
   restoreScroll();
@@ -472,7 +484,10 @@ app.addEventListener("click", async (event) => {
   if (event.target.closest("[data-action='placeholder']")) return showToast("该区域沿用现有 APP，本工程未扩展其业务功能");
 
   const slice = event.target.closest("[data-slice]");
-  if (slice) return document.querySelector(".slice-card")?.replaceWith(htmlToElement(renderWorkbenchSlice(slice.dataset.slice)));
+  if (slice) {
+    if (slice.dataset.slice === "mail" && slice.classList.contains("active")) return navigate("mail");
+    return document.querySelector(".slice-card")?.replaceWith(htmlToElement(renderWorkbenchSlice(slice.dataset.slice)));
+  }
 
   const folderRoute = event.target.closest("[data-folder-route]");
   if (folderRoute) return navigate(`folder/${folderRoute.dataset.folderRoute}`);
